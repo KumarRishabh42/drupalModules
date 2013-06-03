@@ -1,0 +1,62 @@
+<?php
+
+/**
+ * @file
+ *   Webform module install/schema hooks.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function recoForm_schema() {
+  $schema = array();
+
+
+
+
+$schema['recoForm'] = array(
+   'description' => 'stores recoForm db information',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The node identifier of a recoForm.',
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'student_id' => array(
+        'description' => 'The student ID',
+        'type' => 'int',
+      ),
+	
+	  'facultyName' => array(
+        'description' => 'The name of the faculty',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+	  'recommendation' => array(
+        'description' => 'The subjects in which the reco is asked',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+	  'shortMessage' => array(
+        'description' => 'The short message',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+	'status' => array(
+        'description' => 'The status of the recommendation',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+
+
+
+      
+    ),
+    'primary key' => array('nid'),
+  );
+
+  return $schema;
+}

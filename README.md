@@ -1,4 +1,5 @@
-drupalModule-recoEngine-
+drupalModules
 ========================
 
-A simple drupal module made as part of learning drupal which is a recommendation engine between users of different roles
+as of now contains 
+	A simple drupal module made for learning drupal which is a recommendation engine between users of different roles

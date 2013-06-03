@@ -1,0 +1,252 @@
+<?php 
+global $user;
+
+
+function recoForm_form($form,&$form_submit) {
+  $form['facultyName'] = array(
+    '#title' => t('Faculty Name'),
+    '#type' => 'textfield',
+    '#required' => TRUE,
+  );
+  $form['subjects'] = array(
+    '#title' => t('Subjects To Recommend'),
+    '#type' => 'textfield',
+    '#required' => TRUE,
+  );
+  $form['shortMessage'] = array(
+    '#title' => t('Short Message'),
+    '#type' => 'textfield',
+    '#required' => TRUE,
+  );
+  $form['submit'] = array(
+    '#value' => 'Ask For Recommendation',
+    '#type' => 'submit',
+    );
+  return $form;
+}
+function recoForm_form_submit($form, &$form_state) {
+	global $user;
+    	form_set_error('year_of_birth', 'Enter a 900 and 2000.');
+
+	$reco = new stdClass();
+	// $reco->user_id = get_user_id();
+	$reco->facultyName = $form_state['values']['facultyName'];
+	$reco->subjects = $form_state['values']['subjects'];
+	$reco->shortMessage = $form_state['values']['shortMessage'];
+	 $id = db_insert('recoForm')
+		 ->fields(array(
+					 'student_id' => $user->uid,
+					 'facultyName' => $reco->facultyName,
+					 'recommendation' => $reco->subjects,
+					 'shortMessage' => $reco->shortMessage,
+                     'status'=>0
+				))
+		 ->execute();
+	  $form_state['redirect'] = 'formtest';
+}
+
+/*
+function recoForm_form_validate($form, &$form_state) {
+	  $year_of_birth = $form_state['values']['facultyName'];
+	    if ($year_of_birth && ($year_of_birth < 1900 || $year_of_birth > 2000)) {
+		        form_set_error('year_of_birth', 'Enter a year between 1900 and 2000.');
+			  }
+}
+
+*/
+
+
+function recoForm_display() {
+	global $user;
+	$query = db_select('recoForm', 'n')
+		->fields('n', array('facultyName', 'recommendation','shortMessage'))
+		->condition('student_id',$user->uid ,'=') //Most recent first.
+		->condition('status',1)
+		->execute();
+	$stringToReturn="";	
+	foreach ($query as $result){
+		$stringToReturn .="<b>Congrats!! </b>you have been recommended for <b>".$result->recommendation."</b> by <b>".$result->facultyName."</b><br/>";
+
+   }	
+	return $stringToReturn;
+	//$itemsx = array();
+	/*foreach ($query as $node){
+		$itemsx[] = array(
+			'data' => l($node->student_id,$node->facultyName,$node->recommendation, $node->shortMessage),
+		);
+	}*/
+#$block['content'] = theme('item_list', array('items' => $itemsx));
+#	  return $block
+}
+
+function recoForm_faculty_form($form,&$form_submit) {
+	global $user;  
+	$query = db_select('recoForm', 'n')
+		->fields('n', array('nid','student_id', 'recommendation','shortMessage'))
+		->orderBy('student_id', 'DESC') //Most recent first.
+		->condition('facultyName',$user->name,'=')
+		->condition('status',0)		
+		->execute();
+	//dpq(($query));
+	
+	$query1 = db_select('recoForm', 'n')
+		->fields('n', array('nid','student_id', 'recommendation','shortMessage'))
+		->orderBy('student_id', 'DESC') //Most recent first.
+		->condition('facultyName',$user->name,'=')		
+		->execute();
+	
+
+
+
+	echo is_array($query);
+	echo "\n";
+	foreach ( $query1 as $result ){     	
+		echo "hello\n";		
+		print $result->student_id; 	
+		print $result->nid;
+	}
+	//facultyReco=array();
+	//foreach ( $query as $result ){
+		
+
+	//}
+	foreach ( $query as $result ){
+	$idx='fd_boxes_'.$result->nid;
+	$student_id=$result->student_id;
+		$studentQuery = db_select('users', 'n')
+		->fields('n', array('uid','name')) //Most recent first.
+		->condition('uid',$student_id,'=')		
+		->execute();
+		
+	foreach($studentQuery as $studentName ){
+			$studentNaam=$studentName->name;
+	}	
+
+	$label="<b>Student ".$studentNaam."</b> has asked for <b>Recommendation</b> in <b>".$result->recommendation."</b>";
+	$val=$result->nid;	
+
+	//print $idx;
+	//print "lola";
+	//print "\n";
+	$form[$idx] = array
+    (
+    '#type'            => 'checkboxes',
+    '#options'         => array
+      (
+		$val	 => $label,
+		//30=>$user->name,
+		
+      //20 => 's',
+      //25 => 'c',
+      ),
+    '#default_value'   => variable_get('fd_boxes', 0),
+    );
+	
+	}
+
+/*  $form['facultyName'] = array(
+    '#title' => t('Faculty Name'),
+    '#type' => 'textfield',
+    '#required' => TRUE,
+  );
+  $form['subjects'] = array(
+    '#title' => t('Subjects To Recommend'),
+    '#type' => 'textfield',
+    '#required' => TRUE,
+  );
+  $form['shortMessage'] = array(
+    '#title' => t('Short Message'),
+    '#type' => 'textfield',
+    '#required' => TRUE,
+  );*/
+  $form['submit'] = array(
+    '#value' => 'Recommend Selected Students',
+    '#type' => 'submit',
+    );
+  return $form;
+}
+
+
+function recoForm_faculty_form_validate($form, &$form_state) {
+	global $user;	
+	$query = db_select('recoForm', 'n')
+		->fields('n', array('nid','student_id', 'recommendation','shortMessage'))
+		->orderBy('student_id', 'DESC') //Most recent first.
+		->condition('facultyName',$user->name,'=')		
+		->condition('status',0)		
+		->execute();
+	$i=0;	
+	foreach ( $query as $result ){
+		$idx='fd_boxes_'.$result->nid;
+		$no=$result->nid;
+		$valx=$form_state['values'][$idx];
+		form_set_error('year_of_birth', var_dump($valx));	
+		if($valx[$no]){
+				$num_updated = db_update('recoForm') // Table name no longer needs {}
+  								->fields(array(
+    											'status' => 1
+  										))
+  								->condition('nid',$result->nid,'=')
+  								->execute();
+			form_set_error('year_of_birth', var_dump($valx));
+			
+		}
+		//		if($i==2){
+	//						form_set_error('year_of_birth', $i);
+		//}
+
+	}
+//	form_set_error('year_of_birth', $i);
+
+
+	 //$year_of_birth = $form_state['values']['facultyName'];
+	   // if ($year_of_birth && ($year_of_birth < 1900 || $year_of_birth > 2000)) {
+		 //       form_set_error('year_of_birth', 'Enter a year between 1900 and 2000.');
+			//  }
+}
+
+
+
+
+
+
+
+
+function recoForm_menu() {
+  $items['formtest'] = array(
+    'title' => 'Form Test',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('recoForm_form'),
+    'access callback' => TRUE,
+    );
+  $items['page'] = array(
+          'title'=>'Faculty Form',
+		  'page callback' => 'drupal_get_form',
+		  'page arguments'=>array('recoForm_faculty_form'),
+          'access callback'=>TRUE,
+		  //'access arguments' => array('access content'),
+		  );
+  $items['display'] = array(
+          'title'=>'Recommendation Display',
+    	  'page callback' => 'recoForm_display',
+		  'page arguments'=>array('recoForm_faculty_form'),
+          'access callback'=>TRUE,
+		  //'access arguments' => array('access content'),
+		  );
+
+
+
+
+  return $items;
+}
+
+
+
+
+function recoForm_help($path, $arg) {
+	switch ($path) {
+		case "admin/help#recoForm":
+			return '<p>' . t("Displays links to nodes created on this date") . '</p>';
+			break;
+	}
+} 

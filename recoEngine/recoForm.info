@@ -1,0 +1,5 @@
+name = recoForm
+description = recoForm
+core = 7.x
+package = Own
+ 
